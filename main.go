@@ -22,18 +22,37 @@ func main() {
 		return c.HTML(http.StatusOK, "WELCOME TO FIBONIZER.\n'/recursive' -> Recursive Fibonizer\n'/loop' -> Loop Fibonizer")
 	})
 
-	e.GET("/recursive", func(c echo.Context) error {
+	e.GET("/recursive/:num", func(c echo.Context) error {
+		num := c.Param("num")
+		parsedNum, err := strconv.Atoi(num)
+
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
 		start := time.Now()
-		fibo := FibonizeRecursive(8)
+		fibo := FibonizeRecursive(parsedNum)
+
 		log.Printf("Time the Recursive Fibonizer took: %d", time.Since(start))
-		return c.HTML(http.StatusOK, strconv.Itoa(fibo))
+
+		return c.HTML(http.StatusOK, strconv.FormatInt(fibo, 10))
 	})
 
-	e.GET("/loop", func(c echo.Context) error {
+	e.GET("/loop/:num", func(c echo.Context) error {
+		num := c.Param("num")
+		parsedNum, err := strconv.Atoi(num)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		start := time.Now()
-		fibo := FibonizeLoop(8)
+		fibo := FibonizeLoop(parsedNum)
+
 		log.Printf("Time the Loop Fibonizer took: %d", time.Since(start))
-		return c.HTML(http.StatusOK, strconv.Itoa(fibo))
+
+		return c.HTML(http.StatusOK, strconv.FormatInt(fibo, 10))
 	})
 
 	e.GET("/health", func(c echo.Context) error {
@@ -48,7 +67,7 @@ func main() {
 	e.Logger.Fatal(e.Start(":" + httpPort))
 }
 
-func FibonizeRecursive(num int) int {
+func FibonizeRecursive(num int) int64 {
 	if num == 0 {
 		return 0
 	}
@@ -60,7 +79,7 @@ func FibonizeRecursive(num int) int {
 	return FibonizeRecursive(num-2) + FibonizeRecursive(num-1)
 }
 
-func FibonizeLoop(num int) int {
+func FibonizeLoop(num int) int64 {
 	if num == 0 {
 		return 0
 	}
@@ -69,12 +88,12 @@ func FibonizeLoop(num int) int {
 		return 1
 	}
 
-	sum := 1
-	previous := 0
+	sum := int64(1)
+	previous := int64(0)
 
 	for i := 2; i <= num; i++ {
 		previousSum := sum
-		sum = sum + previous
+		sum = sum + int64(previous)
 		previous = previousSum
 	}
 

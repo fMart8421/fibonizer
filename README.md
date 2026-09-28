@@ -6,6 +6,26 @@ This is a project made to learn a bit about the Go language, remember some conce
 
 The final product should have all the various finished implementations that I came up with (and their performance improvements).
 
+## Commands
+
+Create Docker image:
+
+```bash
+docker build --tag fibonizer .
+```
+
+Build Docker image and create container:
+
+```bash
+docker run --publish 8080:8080 fibonizer
+```
+
+Then request the Fibonizer, where `<method>` is either `loop` or `recursive`:
+
+```bash
+curl http://localhost:8080/<method>/:id
+```
+
 ## Journey
 
 This chapter documents the dificulties I had throughout this project. 
@@ -17,6 +37,10 @@ The first dificulty I had was Go. I decided I wanted to try this language for th
 Overall I think that's the only "problem" I had with Go. Every time I wanted to do something new, I had to go to the docs in order to check how it was done.
 
 Along with the language, I didn't know anything about its libraries, so the process was somewhat the same.
+
+#### Libaries
+
+Right now we are using an outdated version of the package **Echo**, which is used to create a server. We are using the `Echo v4` but the most recent is the `Echo v5`. The upgrade will be done soon.
 
 ### Docker
 
