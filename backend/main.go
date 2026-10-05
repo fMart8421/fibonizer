@@ -59,7 +59,7 @@ func newServer() *echo.Echo {
 		return c.JSON(http.StatusOK, FiboResponse{
 			Method:     "recursive",
 			N:          parsedNum,
-			Result:     strconv.FormatInt(fibo, 10),
+			Result:     strconv.FormatInt(fibo[1], 10),
 			DurationNs: duration.Nanoseconds(),
 		})
 	})
@@ -93,16 +93,18 @@ func newServer() *echo.Echo {
 	return e
 }
 
-func FibonizeRecursive(num int) int64 {
+func FibonizeRecursive(num int) [2]int64 {
 	if num == 0 {
-		return 0
+		return [2]int64{0, 0}
 	}
 
 	if num == 1 {
-		return 1
+		return [2]int64{0, 1}
 	}
 
-	return FibonizeRecursive(num-2) + FibonizeRecursive(num-1)
+	fibonized := FibonizeRecursive(num - 1)
+
+	return [2]int64{fibonized[1], fibonized[0] + fibonized[1]}
 }
 
 func FibonizeLoop(num int) int64 {
