@@ -1,0 +1,27 @@
+# Template to wire the Fibonizer services together. Not finished yet, explore and adapt.
+# Usage: docker compose up --build
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    # environment:
+    #   PORT: "8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # The browser calls the backend directly, so this must be reachable from the host
+        VITE_API_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # TODO: Redis cache for the checkpoint strategy described in the README
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
