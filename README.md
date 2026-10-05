@@ -6,25 +6,55 @@ This is a project made to learn a bit about the Go language, remember some conce
 
 The final product should have all the various finished implementations that I came up with (and their performance improvements).
 
+## Project structure
+
+- `backend/` - Go API (Echo) with the Fibonacci implementations
+- `frontend/` - React + Vite + TypeScript page to request F(N) and compare implementation times
+- `docker-compose.yml` - template to wire the services together (work in progress)
+
 ## Commands
 
-Create Docker image:
+All commands are run from the repository root.
+
+### Backend
+
+Run the tests (inside Docker):
 
 ```bash
-docker build --tag fibonizer .
+docker build --target run-test-stage -f backend/Dockerfile.multistage ./backend
 ```
 
-Build Docker image and create container:
+Create the Docker image and run a container:
 
 ```bash
-docker run --publish 8080:8080 fibonizer
+docker build --tag fibonizer-backend ./backend
+docker run --publish 8080:8080 fibonizer-backend
 ```
 
 Then request the Fibonizer, where `<method>` is either `loop` or `recursive`:
 
 ```bash
-curl http://localhost:8080/<method>/:id
+curl http://localhost:8080/<method>/<n>
 ```
+
+The response is JSON. `result` is a string so large numbers keep their precision in JavaScript:
+
+```json
+{"method":"loop","n":10,"result":"55","durationNs":270}
+```
+
+### Frontend
+
+Create the Docker image and run a container (with the backend running on port 8080):
+
+```bash
+docker build --tag fibonizer-frontend ./frontend
+docker run --publish 3000:80 fibonizer-frontend
+```
+
+Then open <http://localhost:3000>. To point it to another backend, pass `--build-arg VITE_API_URL=<url>` to `docker build`.
+
+For local development with hot reload, run `npm install` and `npm run dev` inside `frontend/`.
 
 ## Journey
 
@@ -92,3 +122,9 @@ For this particular implementation, a cap in memory should be implemented, and, 
 #### After research
 
 This area is destined to be filled once some research about the Fibonacci sequence is conducted.
+
+### Frontend
+
+For the initial frontend, I decided to ask for some help, in this case, Claude's help, and generated a simple frontend using React (with TypeScript) that is served via nginx.
+
+The frontend shows an input that asks for a number. That number is then sent to the backend to Fibonize. It also shows the different algorithms that were used and how long they took to Fibonize the number that was requested.
