@@ -11,12 +11,31 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func main() {
+type FiboResponse struct {
+	Method string `json:"method"`
+	N      int    `json:"n"`
+	// Sent as a string because int64 values above 2^53 lose precision as JS numbers
+	Result     string `json:"result"`
+	DurationNs int64  `json:"durationNs"`
+}
 
+func main() {
+	e := newServer()
+
+	httpPort := os.Getenv("PORT")
+	if httpPort == "" {
+		httpPort = "8080"
+	}
+
+	e.Logger.Fatal(e.Start(":" + httpPort))
+}
+
+func newServer() *echo.Echo {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	e.GET("/", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "WELCOME TO FIBONIZER.\n'/recursive' -> Recursive Fibonizer\n'/loop' -> Loop Fibonizer")
@@ -33,10 +52,16 @@ func main() {
 
 		start := time.Now()
 		fibo := FibonizeRecursive(parsedNum)
+		duration := time.Since(start)
 
-		log.Printf("Time the Recursive Fibonizer took: %d", time.Since(start))
+		log.Printf("Time the Recursive Fibonizer took: %d", duration)
 
-		return c.HTML(http.StatusOK, strconv.FormatInt(fibo, 10))
+		return c.JSON(http.StatusOK, FiboResponse{
+			Method:     "recursive",
+			N:          parsedNum,
+			Result:     strconv.FormatInt(fibo, 10),
+			DurationNs: duration.Nanoseconds(),
+		})
 	})
 
 	e.GET("/loop/:num", func(c echo.Context) error {
@@ -49,22 +74,23 @@ func main() {
 
 		start := time.Now()
 		fibo := FibonizeLoop(parsedNum)
+		duration := time.Since(start)
 
-		log.Printf("Time the Loop Fibonizer took: %d", time.Since(start))
+		log.Printf("Time the Loop Fibonizer took: %d", duration)
 
-		return c.HTML(http.StatusOK, strconv.FormatInt(fibo, 10))
+		return c.JSON(http.StatusOK, FiboResponse{
+			Method:     "loop",
+			N:          parsedNum,
+			Result:     strconv.FormatInt(fibo, 10),
+			DurationNs: duration.Nanoseconds(),
+		})
 	})
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct{ Status string }{Status: "OK"})
 	})
 
-	httpPort := os.Getenv("PORT")
-	if httpPort == "" {
-		httpPort = "8080"
-	}
-
-	e.Logger.Fatal(e.Start(":" + httpPort))
+	return e
 }
 
 func FibonizeRecursive(num int) int64 {
