@@ -34,18 +34,18 @@ func TestFibonizeLoop(t *testing.T) {
 func TestFibonizeRecursive(t *testing.T) {
 	var tests = []struct {
 		n    int
-		want int64
+		want [2]int64
 	}{
-		{0, 0},
-		{1, 1},
-		{2, 1},
-		{10, 55},
-		{20, 6765},
-		{30, 832040},
+		{0, [2]int64{0, 0}},
+		{1, [2]int64{0, 1}},
+		{2, [2]int64{0, 1}},
+		{10, [2]int64{34, 55}},
+		{20, [2]int64{4181, 6765}},
+		{30, [2]int64{514229, 832040}},
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("F(%d)", tt.n), func(t *testing.T) {
-			ans := FibonizeRecursive(tt.n)
+			ans := FibonizeRecursiveV2(tt.n)
 			if ans != tt.want {
 				t.Errorf("FibonizeRecursive(%d) = %d; want %d", tt.n, ans, tt.want)
 			}
@@ -55,8 +55,9 @@ func TestFibonizeRecursive(t *testing.T) {
 
 func TestImplementationsAgree(t *testing.T) {
 	for n := 0; n <= 25; n++ {
-		loop, recursive := FibonizeLoop(n), FibonizeRecursive(n)
-		if loop != recursive {
+		loop := FibonizeLoop(n)
+		recursive := FibonizeRecursiveV2(n)
+		if loop != recursive[1] {
 			t.Errorf("F(%d): loop = %d, recursive = %d", n, loop, recursive)
 		}
 	}

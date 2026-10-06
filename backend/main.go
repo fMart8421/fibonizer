@@ -19,6 +19,12 @@ type FiboResponse struct {
 	DurationNs int64  `json:"durationNs"`
 }
 
+type FiboError struct {
+	Method  string `json:"method"`
+	N       int    `json:"n"`
+	Message string `json:"error"`
+}
+
 func main() {
 	e := newServer()
 
@@ -41,46 +47,76 @@ func newServer() *echo.Echo {
 		return c.HTML(http.StatusOK, "WELCOME TO FIBONIZER.\n'/recursive' -> Recursive Fibonizer\n'/loop' -> Loop Fibonizer")
 	})
 
-	e.GET("/recursive/:num", func(c echo.Context) error {
-		num := c.Param("num")
-		parsedNum, err := strconv.Atoi(num)
+	e.GET("/recursive/v1/:num", func(c echo.Context) error {
+		num := GetParsedNumber(c)
 
-		if err != nil {
-			log.Fatal(err)
-			return err
+		if num < 0 {
+			return c.JSON(http.StatusBadRequest, FiboError{
+				Method:  "loop",
+				N:       num,
+				Message: "Number cannot be negative",
+			})
 		}
 
 		start := time.Now()
-		fibo := FibonizeRecursive(parsedNum)
+		fibo := FibonizeRecursiveV1(num)
 		duration := time.Since(start)
 
 		log.Printf("Time the Recursive Fibonizer took: %d", duration)
 
 		return c.JSON(http.StatusOK, FiboResponse{
 			Method:     "recursive",
-			N:          parsedNum,
+			N:          num,
+			Result:     strconv.FormatInt(fibo, 10),
+			DurationNs: duration.Nanoseconds(),
+		})
+	})
+
+	e.GET("/recursive/v2/:num", func(c echo.Context) error {
+		num := GetParsedNumber(c)
+
+		if num < 0 {
+			return c.JSON(http.StatusBadRequest, FiboError{
+				Method:  "loop",
+				N:       num,
+				Message: "Number cannot be negative",
+			})
+		}
+
+		start := time.Now()
+		fibo := FibonizeRecursiveV2(num)
+		duration := time.Since(start)
+
+		log.Printf("Time the Recursive Fibonizer took: %d", duration)
+
+		return c.JSON(http.StatusOK, FiboResponse{
+			Method:     "recursive",
+			N:          num,
 			Result:     strconv.FormatInt(fibo[1], 10),
 			DurationNs: duration.Nanoseconds(),
 		})
 	})
 
 	e.GET("/loop/:num", func(c echo.Context) error {
-		num := c.Param("num")
-		parsedNum, err := strconv.Atoi(num)
+		num := GetParsedNumber(c)
 
-		if err != nil {
-			log.Fatal(err)
+		if num < 0 {
+			return c.JSON(http.StatusBadRequest, FiboError{
+				Method:  "loop",
+				N:       num,
+				Message: "Number cannot be negative",
+			})
 		}
 
 		start := time.Now()
-		fibo := FibonizeLoop(parsedNum)
+		fibo := FibonizeLoop(num)
 		duration := time.Since(start)
 
 		log.Printf("Time the Loop Fibonizer took: %d", duration)
 
 		return c.JSON(http.StatusOK, FiboResponse{
 			Method:     "loop",
-			N:          parsedNum,
+			N:          num,
 			Result:     strconv.FormatInt(fibo, 10),
 			DurationNs: duration.Nanoseconds(),
 		})
@@ -93,7 +129,22 @@ func newServer() *echo.Echo {
 	return e
 }
 
-func FibonizeRecursive(num int) [2]int64 {
+// this implementation is obviously wrong, it was temporary but for documenting reasons, we keep it as V1
+func FibonizeRecursiveV1(num int) int64 {
+	if num == 0 {
+		return 0
+	}
+
+	if num == 1 {
+		return 1
+	}
+
+	return FibonizeRecursiveV1(num-2) + FibonizeRecursiveV1(num-1)
+}
+
+// this implementation returns an array with the previous and the current number
+// this version is still way slower than `FibonizeLoop`, but that's due to the call stack and all the necessary resources a new call to a function needs
+func FibonizeRecursiveV2(num int) [2]int64 {
 	if num == 0 {
 		return [2]int64{0, 0}
 	}
@@ -102,11 +153,12 @@ func FibonizeRecursive(num int) [2]int64 {
 		return [2]int64{0, 1}
 	}
 
-	fibonized := FibonizeRecursive(num - 1)
+	fibonized := FibonizeRecursiveV2(num - 1)
 
 	return [2]int64{fibonized[1], fibonized[0] + fibonized[1]}
 }
 
+// a simple loop that goes up to the num (meaning it runs N times), but the most efficient I came up with
 func FibonizeLoop(num int) int64 {
 	if num == 0 {
 		return 0
@@ -126,4 +178,15 @@ func FibonizeLoop(num int) int64 {
 	}
 
 	return sum
+}
+
+func GetParsedNumber(c echo.Context) int {
+	num := c.Param("num")
+	parsedNum, err := strconv.Atoi(num)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return parsedNum
 }
