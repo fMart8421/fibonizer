@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Since the project is just a personal project, with no necessary releases and versions, dates will be used instead of versions.
 
-## [Unreleased]
+## 2026-10-5
+
+### Changed
+- Added `FibonizeRecursiveV1` and `FibonizeRecursiveV2` to keep a track of what was done.
+- Updated `README.md` with new information.
+- Added changes to `CHANGELOG.md`
+
+## 2026-09-28
+
+## 2026-10-5
 
 ### Added
 - `frontend/` application served through nginx, with its own Dockerfile.
@@ -16,6 +25,7 @@ Since the project is just a personal project, with no necessary releases and ver
 ### Changed
 - Moved the Go service (`main.go`, `main_test.go`, `go.mod`, `go.sum`, Dockerfiles) into `backend/`.
 - Split `.gitignore` so the backend has its own.
+- Improved `FibonizeRecursive` function performance in `main.go`.
 
 ## 2026-09-28
 

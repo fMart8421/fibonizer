@@ -72,6 +72,14 @@ Along with the language, I didn't know anything about its libraries, so the proc
 
 Right now we are using an outdated version of the package **Echo**, which is used to create a server. We are using the `Echo v4` but the most recent is the `Echo v5`. The upgrade will be done soon.
 
+#### 2026-10-06
+
+I am growing a bit more accustomed to the new syntax of Go. Coming from a language with a lot of freedom like JavaScript and TypeScript, it is a bit "weird" dealing with Go syntax, especially the arrays.
+
+I decided to maintain previous versions of the algorithms to keep a track record of all the thought processes I had throughout this "adventure".
+
+The next step is to explore a little bit about the Fibonacci sequence and how to optimize it.
+
 ### Docker
 
 When I started, I did not remember anything about Docker. I did remember that it had images and then we would build images into containers but that was it.
