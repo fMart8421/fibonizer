@@ -224,15 +224,15 @@ func FibonizeBinet(num int) *big.Int {
 
 	numFloat64 := float64(num)
 
-	for i := numFloat64; i > 1; i = math.Floor(i / 2) {
+	for i := numFloat64; i > 0; i = math.Floor(i / 2) {
 		halves = append(halves, int(i))
 	}
 
 	sort.Slice(halves, func(i, j int) bool {
-		return j-i > 0
+		return halves[j]-halves[i] > 0
 	})
 
-	a, b := big.NewInt(0), big.NewInt(1)
+	a, b := big.NewInt(0), big.NewInt(1) // for 1, the starting pair is (0,1)
 	c, d := big.NewInt(0), big.NewInt(1)
 	twoBigInt := big.NewInt(2)
 
@@ -250,19 +250,22 @@ func FibonizeBinet(num int) *big.Int {
 
 		d.Add(d, tempBSquared) // d = d + b^2 = a^2 + b^2
 
-		if n%2 == 0 {
-			a, b = c, d
+		if halves[n]%2 == 0 {
+			a.Set(c)
+			b.Set(d)
 		} else {
-			a = d
+			a.Set(d)
 			b.Add(c, d)
 		}
 	}
 
+	// if even, F(k) is the first element
 	if num%2 == 0 {
-		return b
+		return a
 	}
 
-	return a
+	// if odd, its the second
+	return b
 }
 
 func GetParsedNumber(c echo.Context) int {
