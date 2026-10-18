@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"net/http"
 	"os"
-	"sort"
 	"strconv"
 	"time"
 
@@ -184,6 +183,10 @@ func FibonizeRecursiveV2(num int) [2]int64 {
 
 	fibonized := FibonizeRecursiveV2(num - 1)
 
+	if fibonized[1] < fibonized[0] {
+		return [2]int64{-1, -1}
+	}
+
 	return [2]int64{fibonized[1], fibonized[0] + fibonized[1]}
 }
 
@@ -203,6 +206,11 @@ func FibonizeLoop(num int) int64 {
 	for i := 2; i <= num; i++ {
 		previousSum := sum
 		sum = sum + int64(previous)
+
+		if previousSum > sum {
+			return -1
+		}
+
 		previous = previousSum
 	}
 
@@ -228,15 +236,13 @@ func FibonizeBinet(num int) *big.Int {
 		halves = append(halves, int(i))
 	}
 
-	sort.Slice(halves, func(i, j int) bool {
-		return halves[j]-halves[i] > 0
-	})
-
 	a, b := big.NewInt(0), big.NewInt(1) // for 1, the starting pair is (0,1)
 	c, d := big.NewInt(0), big.NewInt(1)
 	twoBigInt := big.NewInt(2)
 
-	for n := range halves {
+	numberOfSteps := len(halves) - 1
+	// halves goes from highest to lowest, so we go backward
+	for n := numberOfSteps; n >= 0; n-- {
 		// the steps in the next expression are
 		// c = 2b
 		// c = c - a = 2b - a
