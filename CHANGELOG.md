@@ -11,11 +11,18 @@ Since the project is just a personal project, with no necessary releases and ver
 ### Added
 - Binet's formula implementation (`FibonizeBinet`, using `math/big`) exposed on `/binet/:num`, so results beyond `int64` fit (dd894d1).
 - `getCumulativeSum` helper (not used yet) (dd894d1).
+- Overflow check in `FibonizeLoop` and `FibonizeRecursiveV2`: when F(N) no longer fits in an `int64` they return `-1` instead of a wrapped-around value (39153fd).
+- Frontend shows "Result Overloaded" for methods that return `-1`, and highlights failed methods in the table with a dedicated error style (6e2aeac, e444a27).
+- `.prettierrc` and new notes in the `README.md` journey (af70629).
 
 ### Changed
 - Frontend now offers the `recursive/v1`, `recursive/v2` and `binet` methods (5c86ee3).
 - Frontend requests now time out after 5 seconds, to avoid waiting indefinitely (21c6f7b).
 - Reformatted `frontend/src/api.ts` (double quotes and semicolons).
+- `FibonizeBinet` no longer sorts the halves; it walks them backwards instead (39153fd).
+- Frontend sends all the requests at once and shows each result as soon as it arrives, instead of running them one by one, so a slow method (e.g. `recursive/v1`) or a timeout no longer blocks the others. Errors are tracked per method (6e2aeac).
+- Frontend picks the fastest/slowest method and the displayed result only among valid (non-overloaded) results (6e2aeac).
+- Reformatted `frontend/src/App.tsx` with Prettier (6e2aeac, e444a27).
 
 ### Fixed
 - `FibonizeBinet` returned wrong results: the loop skipped the last halving step, the sort compared indexes instead of values, the even/odd branch used the loop index instead of the halved value, and the result pair was returned the wrong way round (54a49e4).
