@@ -21,7 +21,9 @@ export async function fibonize(
   method: FiboMethod,
   n: number,
 ): Promise<FiboResponse> {
-  const res = await fetch(`${API_URL}/${method}/${n}`);
+  const res = await fetch(`${API_URL}/${method}/${n}`, {
+    signal: AbortSignal.timeout(5000) // timeout after 5 seconds of request
+  });
 
   if (!res.ok) {
     throw new Error(`${method} request failed with status ${res.status}`);
