@@ -1,19 +1,22 @@
 import { useState, type FormEvent } from "react";
-import { fibonize, METHODS, type FiboResponse } from "./api";
+import { fibonize, METHODS, type FiboMethod, type FiboResponse } from "./api";
 import { formatBigNumber, formatDuration } from "./format";
 import "./App.css";
+
+// Sentinel the backend returns when F(N) doesn't fit in an int64
+const OVERLOADED = "-1";
 
 function App() {
   const [input, setInput] = useState("10");
   const [results, setResults] = useState<FiboResponse[]>([]);
+  const [errors, setErrors] = useState<Partial<Record<FiboMethod, string>>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setLoading(true);
-    setError(null);
+    setErrors({});
     setResults([]);
 
     try {
@@ -29,7 +32,7 @@ function App() {
             setResults((prev) => [...prev, fiboValue]);
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            setError((prev) => (prev ? `${prev}; ${method}: ${message}` : `${method}: ${message}`));
+            setErrors((prev) => ({ ...prev, [method]: message }));
           }
         }),
       );
@@ -38,8 +41,11 @@ function App() {
     }
   }
 
+  const errorMessage = Object.entries(errors)
+    .map(([method, message]) => `${method}: ${message}`)
+    .join("; ");
 
-  const valid = results.filter((r) => r.result !== '-1');
+  const valid = results.filter((r) => r.result !== OVERLOADED);
 
   const fastest = valid.reduce<FiboResponse | null>(
     (best, r) => (!best || r.durationNs < best.durationNs ? r : best),
@@ -72,9 +78,9 @@ function App() {
         </button>
       </form>
 
-      {error && (
+      {errorMessage && (
         <p className="error" role="alert">
-          {error}
+          {errorMessage}
         </p>
       )}
 
@@ -82,7 +88,7 @@ function App() {
         <h2>Result</h2>
         {results.length > 0 ? (
           <p className="result-value">
-            F({fastest?.n}) = <span>{formatBigNumber(fastest?.result ?? '—')}</span>
+            F({results[0].n}) = <span>{fastest ? formatBigNumber(fastest.result) : "—"}</span>
           </p>
         ) : (
           <p className="placeholder">
@@ -105,25 +111,32 @@ function App() {
           <tbody>
             {METHODS.map((method) => {
               const r = results.find((res) => res.method === method);
-              const isValid = valid.find((res) => res.method === method);
+              const failed = method in errors;
+              const overloaded = r?.result === OVERLOADED;
+              const timed = r && !overloaded ? r : null;
 
-              const overloaded = r?.result === "-1";
-              const resultText = overloaded
-                ? "Result Overloaded"
-                : formatBigNumber(r?.result ?? "");
+              const resultText = failed
+                ? "Error"
+                : overloaded
+                  ? "Result Overloaded"
+                  : r
+                    ? formatBigNumber(r.result)
+                    : loading
+                      ? "…"
+                      : "—";
 
-              const isFastest = r && results.length > 1 && r.durationNs === fastest?.durationNs;
+              const isFastest = r === fastest && results.length > 1;
 
               return (
-                <tr key={method} className={isFastest ? "fastest" : undefined}>
+                <tr key={method} className={failed ? "errored" : isFastest ? "fastest" : undefined}>
                   <td>{method}</td>
-                  <td className="mono">{r ? resultText : loading ? "…" : "—"}</td>
-                  <td className="mono">{r && !overloaded ? formatDuration(r.durationNs) : "—"}</td>
+                  <td className="mono">{resultText}</td>
+                  <td className="mono">{timed ? formatDuration(timed.durationNs) : "—"}</td>
                   <td className="bar-col">
                     <div className="bar-track">
                       <div
                         className="bar"
-                        style={{ width: r && isValid ? `${(r.durationNs / (slowest?.durationNs ?? r.durationNs)) * 100}%` : 0 }}
+                        style={{ width: timed && slowest ? `${(timed.durationNs / slowest.durationNs) * 100}%` : 0 }}
                       />
                     </div>
                   </td>

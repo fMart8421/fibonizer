@@ -172,3 +172,12 @@ tr.fastest td {
 tr.fastest .bar {
   background: var(--success);
 }
+
+tr.errored td {
+  background: var(--error-bg);
+}
+
+tr.errored td.mono {
+  color: var(--error);
+  font-weight: 600;
+}
