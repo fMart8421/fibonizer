@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Since the project is just a personal project, with no necessary releases and versions, dates will be used instead of versions.
 
+## 2026-10-20
+
+### Added
+- `FibonizeLoopV2`, a loop implementation based on `math/big`, exposed on `/loop/v2/:num`, so it handles results beyond `int64` (fd696f4).
+- `README.md` "After research" section explaining Binet's formula (fast doubling) and why the `big.Int` implementations are slower than `int64` ones for small numbers. Also noted the 5 second request limit (9bd91e7).
+
+### Changed
+- Renamed `/loop/:num` to `/loop/v1/:num` (method `loop/v1`) to make room for the new version (fd696f4).
+- `getCumulativeSum` is now the exported `GetCumulativeSum`, works on private copies of the given values (so it no longer mutates its input) and is used by `FibonizeLoopV2` (fd696f4).
+- Frontend now offers `loop/v1` and `loop/v2` in place of `loop` (1fd7004).
+- Corrected the timing units (ns, not ms) and the complexity of the recursive approach in `README.md` (9bd91e7).
+
+### Fixed
+- The 400 error response for negative numbers reported the method as `loop` on every endpoint; each endpoint now reports its own method (fd696f4).
+
 ## 2026-10-18
 
 ### Added
