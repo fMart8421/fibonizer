@@ -54,7 +54,7 @@ func newServer() *echo.Echo {
 
 		if num < 0 {
 			return c.JSON(http.StatusBadRequest, FiboError{
-				Method:  "loop",
+				Method:  "recursive/v1",
 				N:       num,
 				Message: "Number cannot be negative",
 			})
@@ -79,7 +79,7 @@ func newServer() *echo.Echo {
 
 		if num < 0 {
 			return c.JSON(http.StatusBadRequest, FiboError{
-				Method:  "loop",
+				Method:  "recursive/v2",
 				N:       num,
 				Message: "Number cannot be negative",
 			})
@@ -99,12 +99,12 @@ func newServer() *echo.Echo {
 		})
 	})
 
-	e.GET("/loop/:num", func(c echo.Context) error {
+	e.GET("/loop/v1/:num", func(c echo.Context) error {
 		num := GetParsedNumber(c)
 
 		if num < 0 {
 			return c.JSON(http.StatusBadRequest, FiboError{
-				Method:  "loop",
+				Method:  "loop/v1",
 				N:       num,
 				Message: "Number cannot be negative",
 			})
@@ -117,9 +117,34 @@ func newServer() *echo.Echo {
 		log.Printf("\n@@@@\nLoop Fibonizer\nNumber:%d\nTime: %d\n@@@@\n", fibo, duration)
 
 		return c.JSON(http.StatusOK, FiboResponse{
-			Method:     "loop",
+			Method:     "loop/v1",
 			N:          num,
 			Result:     strconv.FormatInt(fibo, 10),
+			DurationNs: duration.Nanoseconds(),
+		})
+	})
+
+	e.GET("/loop/v2/:num", func(c echo.Context) error {
+		num := GetParsedNumber(c)
+
+		if num < 0 {
+			return c.JSON(http.StatusBadRequest, FiboError{
+				Method:  "loop/v2",
+				N:       num,
+				Message: "Number cannot be negative",
+			})
+		}
+
+		start := time.Now()
+		fibo := FibonizeLoopV2(num)
+		duration := time.Since(start)
+
+		log.Printf("\n@@@@\nLoop Fibonizer v2\nNumber:%s\nTime: %d\n@@@@\n", fibo.String(), duration)
+
+		return c.JSON(http.StatusOK, FiboResponse{
+			Method:     "loop/v2",
+			N:          num,
+			Result:     fibo.String(),
 			DurationNs: duration.Nanoseconds(),
 		})
 	})
@@ -129,7 +154,7 @@ func newServer() *echo.Echo {
 
 		if num < 0 {
 			return c.JSON(http.StatusBadRequest, FiboError{
-				Method:  "loop",
+				Method:  "binet",
 				N:       num,
 				Message: "Number cannot be negative",
 			})
@@ -217,6 +242,18 @@ func FibonizeLoop(num int) int64 {
 	return sum
 }
 
+func FibonizeLoopV2(num int) *big.Int {
+	if num == 0 {
+		return big.NewInt(0)
+	}
+
+	if num == 1 {
+		return big.NewInt(1)
+	}
+
+	return GetCumulativeSum(2, [2]*big.Int{big.NewInt(0), big.NewInt(1)}, num)
+}
+
 // Binet's formula is the best way to calculate very big numbers since it's O(n)=log2(n)
 //
 // the formula is:
@@ -286,14 +323,13 @@ func GetParsedNumber(c echo.Context) int {
 }
 
 // gets the cumulative sum for the initialN, given the previousValues, until maxN
-func getCumulativeSum(initialN int, previousValues [2]*big.Int, maxN int) *big.Int {
-	sum, previous := previousValues[1], previousValues[0] // F(N-1), F(N-2)
-	previousSum := big.NewInt(0)
+func GetCumulativeSum(initialN int, previousValues [2]*big.Int, maxN int) *big.Int {
+	previous := new(big.Int).Set(previousValues[0]) // F(N-2), private copy
+	sum := new(big.Int).Set(previousValues[1])      // F(N-1), private copy
 
 	for i := initialN; i <= maxN; i++ {
-		previousSum = sum      // save F(i-1)
-		sum.Add(sum, previous) // F(i) = F(i-1) + F(i-2)
-		previous = previousSum // next iteration, F(N-2) will be this iteration's F(i-1)
+		previous.Add(sum, previous)   // F(i) = F(i-1) + F(i-2)
+		previous, sum = sum, previous // currently, previous is F(i) and sum is F(i-1), so we switch for next iteration
 	}
 
 	return sum
