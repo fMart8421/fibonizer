@@ -8,6 +8,8 @@ code optimization.
 The final product should have all the various finished implementations that I came up with (and
 their performance improvements).
 
+For the sake of simplicity and time, I limited the requests time to 5 seconds.
+
 ## Project structure
 
 - `backend/` - Go API (Echo) with the Fibonacci implementations
@@ -131,9 +133,9 @@ At the time of writing, I still have not implemented the part where we can ask f
 N to calculate, but with the first implementations of the algorithm, testing F(8) and it had the
 following results:
 
-- Recursive: around 400ms
-  - The problem? I was calculating F(n-2) and F(n-1), which is an O(xM) operation, unnecessarily.
-- Loop: around 200ms
+- Recursive: around 400ns
+  - The problem? I was calculating F(n-2) and F(n-1), which is an O(N^2) operation, unnecessarily.
+- Loop: around 200ns
   - Still not great. It also makes sense beacuse it's half of the time that the recursive takes.
 
 After seeing this, I thought that, of course, I had to improve performance, especially if a lot of
@@ -171,7 +173,32 @@ reached, we clear the lower checkpoints, which are always quicker to calculate.
 
 #### After research
 
-This area is destined to be filled once some research about the Fibonacci sequence is conducted.
+After some research, I found out about Binet's formula (or Fast Doubling), which is an interesting
+optimization and formula, I quite enjoyed learning about it (I did not quite understand the
+mathematical proof of it).
+
+The formula goes like this:
+
+Divide N in half until we get 0 (flooring each division). For each k of those halves, apply the
+following:
+
+- (a, b) = (F(k), F(k+1))
+- (c, d) = (F(2k), F(2k+1))
+- c = a(2b - a)
+- d = b^2 + a^2
+
+if k is odd, go the extra step and make the pair (F(2k+1), F(2k) + F(2k+1))
+
+The idea is that a should be from a k that is even (meaning b comes from odd).
+
+This formula brings us to O(log2(N)), which is great... but.
+
+When implementing, I was getting times that were way above what the Loop and RecursiveV2 were
+getting. My problem was: Why?
+
+Well, looking at the implementations, I thought that the difference was in the data type. And I was
+right. To be able to Fibonize numbers above 94, we needed to go with Big Ints, and that was the
+difference, which can be seen with Loop and LoopV2.
 
 ### Frontend
 
