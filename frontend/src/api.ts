@@ -1,9 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
-export type FiboMethod = "loop" | "recursive/v1" | "recursive/v2" | "binet";
+export type FiboMethod = "loop/v1" | "loop/v2" | "recursive/v1" | "recursive/v2" | "binet";
 
 export const METHODS: FiboMethod[] = [
-  "loop",
+  "loop/v1",
+  "loop/v2",
   "recursive/v1",
   "recursive/v2",
   "binet",
@@ -17,12 +18,9 @@ export interface FiboResponse {
   durationNs: number;
 }
 
-export async function fibonize(
-  method: FiboMethod,
-  n: number,
-): Promise<FiboResponse> {
+export async function fibonize(method: FiboMethod, n: number): Promise<FiboResponse> {
   const res = await fetch(`${API_URL}/${method}/${n}`, {
-    signal: AbortSignal.timeout(5000) // timeout after 5 seconds of request
+    signal: AbortSignal.timeout(5000), // timeout after 5 seconds of request
   });
 
   if (!res.ok) {
